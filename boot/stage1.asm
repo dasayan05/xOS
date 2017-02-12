@@ -16,8 +16,8 @@ BPBRootEntries: 		dw 224			; 224 entries in the root dir
 BPBTotalSectors: 		dw 2880			; 2880 x 512B(BPBBytesPerSector) ~ 1.44M
 BPBMedia: 			db 0xF8			; 0x11111000
 BPBSectorsPerFAT: 		dw 9				; 9 sector per FAT - two FATs total 18
-BPBSectorsPerTrack: 	dw 18			; floppy has 18 sectors/track
-BPBHeadsPerCylinder: 	dw 2				; two heads, one platter
+BPBSectorsPerTrack: 	dw 18			; floppy has 18 sectors/track (SPT)
+BPBHeadsPerCylinder: 	dw 2				; two heads, one platter (HPC)
 BPBHiddenSectors: 		dd 0				; nope!!
 BPBTotalSectorsBig:     	dd 0
 BSDriveNumber: 	     db 0
@@ -49,7 +49,21 @@ BSFileSystem: 	        	db "FAT12   "		; FAT12 file system
 ; ss := 0x7000 & sp := 0xFFFF so ss:sp == 0x7FFFF (0x7000 * 0x10 + 0xFFFF)
 %define STACK_SEGMENT 0x7000
 
+; to fill the rest of the binary file
+%define FILLER_BYTE 0x00
+
+; size of the bootloader in BPBBytesPerSector
+%define BOOTLOADER_SIZE 512
+
+; the ID/drive number (given by BIOS) of the boot device
+%define DISK_NUMBER 0x00
+
+; two very important Parameter for LBAtoCHS conversion
+%define HPC 2
+%define SPT 18
+
 %include "print.inc"
+%include "disk.inc"
 
 StageOne:
 	; everything starts from here
@@ -69,12 +83,36 @@ StageOne:
 	lea si, [welcomeMsg]	; just a
 	call PrintString		; welcome msg
 
+	DiskReset DISK_NUMBER
+
+	mov ax, 0x07E0
+	mov es, ax
+	xor bx, bx
+	mov word [LBA], 0x0023
+	call LBAtoCHS
+	mov ch, byte [CYL]
+	mov dh, byte [HEAD]
+	mov cl, byte [SEC]
+	mov al, 1
+	mov dl, DISK_NUMBER
+	call ReadDisk
+
+
+	; DiskRead DISK_NUMBER, CHS(0,1,17), 1, 0x07E0
+
 	cli
 	hlt
 
 data_area:
-	welcomeMsg: db "Welcome!",0
-	errorMsg: db "Error!",0
+	welcomeMsg: db "Welcome! ",0
+	errorMsg: db "Error! ",0
+	CYL: db 0x00
+	HEAD: db 0x00
+	SEC: db 0x00
+	LBA: dw 0x00
+	TEMP1: dw 0x00
+	TEMP2: dw 0x00
 
-times 510-($-$$) db 0x00
-dw 0xAA55
+times (BOOTLOADER_SIZE-2) - ($-$$) db FILLER_BYTE
+BootLoaderSign:
+	dw 0xAA55
