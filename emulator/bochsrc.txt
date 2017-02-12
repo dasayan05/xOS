@@ -1,0 +1,7 @@
+megs: 32
+romimage: file=BIOS-bochs-latest, address=0xfffe0000
+vgaromimage: file=VGABIOS-lgpl-latest
+floppya: 1_44=floppy.img, status=inserted
+boot: a
+mouse: enabled=0
+display_library: x
