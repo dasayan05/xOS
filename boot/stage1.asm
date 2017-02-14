@@ -110,12 +110,45 @@ StageOne:
 
 	call ReadDisk
 
+	; search for the stage2 bootloader
+
+	mov al, 0				; setting local counter
+	mov di, -0x20
+
+.gotoNextEntry:
+	xor al, al
+	lea si, [stage2filename]	; for DS:SI - 0x7c0:stage2filename
+	add di, 0x20			; for ES:DI - 0x7e0:0x00
+	cmp byte [es:di], 0x00
+	je .NotFound
+	push di
+.nextByte:
+	cmpsb
+	jne .charNotEqual
+	inc al
+	cmp al, 0x0b
+	je .GotIt
+	jmp .nextByte
+.charNotEqual:
+	pop di
+	jmp .gotoNextEntry
+.GotIt:
+	pop di
+	add di, 0x1A
+	jmp .SearchingDone
+.NotFound:
+	lea si, [NotFoundMsg]
+	call PrintString
+.SearchingDone:
+
 	cli
 	hlt
 
 data_area:
 	welcomeMsg: db "Welcome! ",0
 	errorMsg: db "Error! ",0
+	stage2filename: db "FILE    TXT"
+	NotFoundMsg: db "Not found",0
 
 times (BOOTLOADER_SIZE-2) - ($-$$) db FILLER_BYTE
 BootLoaderSign:
