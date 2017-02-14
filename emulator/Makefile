@@ -3,7 +3,7 @@
 
 
 FLOPPY = floppy.img
-MOUNT_LOC = /media/floppy
+MOUNT_LOC = /media/floppy/
 
 STAGE1 = stage1.bin
 STAGE2 = stage2.bin
@@ -14,10 +14,11 @@ REMOVE = rm -f
 
 .PHONY: all
 all:
-	@ ${MKFS} ${FLOPPY}
 	@ echo "Virtual floppy formatted"
 	@ ${DISKDUMP} if=${STAGE1} of=${FLOPPY} count=1 conv=notrunc
 	@ echo "Bootloader stage-1 written to floppy"
+	@ sudo cp ${STAGE2} ${MOUNT_LOC}
+	@ echo "Bootloader stage-2 copied to floppy"
 	@ ${MAKE} emulate
 
 .PHONY: clean
