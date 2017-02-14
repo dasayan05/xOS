@@ -159,7 +159,7 @@ StageOne:
 .BrowseFat:
 	mov ax, word [NextFatEntry]
 	cmp ax, 0x0FFF
-	je .outside
+	je .JumpToStageTwo
 .LoadTheSector:
 	; the entry is not FFF, so load the sector
 	add ax, 0x1F		; from logical fat entry to LBA
@@ -209,7 +209,9 @@ StageOne:
 	sub ax, 0x01
 	jmp .ItsEven
 
-.outside:
+.JumpToStageTwo:
+	jmp 0x07C0:0x0200
+
 	cli
 	hlt
 
