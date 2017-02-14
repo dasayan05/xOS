@@ -237,7 +237,7 @@ StageOne:
 data_area:
 	welcomeMsg: db "WC! ",0
 	errorMsg: db "ER! ",0
-	stage2filename: db "BIGFILE TXT"
+	stage2filename: db "STAGE2  BIN"
 	NotFoundMsg: db "Not found",0
 	NextFatEntry: dw 0x00
 	NextBXIndex: dw STAGE2_LOAD_ADDR_OFF
