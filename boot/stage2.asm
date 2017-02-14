@@ -1,15 +1,35 @@
-[bits 16]
+[BITS 16]		; It is still 16 bits
+[ORG 0x0]
 
-call Main
+section .text	; Text (only) section
 
-data: dq 0x00
+%define GENERAL_SEGMENT 0x07E0
+%define STACK_SEGMENT 0x7000
 
-Main:
-	mov al, 'Q'
-	mov ah, 0x0e
-	int 0x10
+StageTwoEntry:
+jmp StageTwo	; jump to the main code
 
-	hlt
+%include "print.inc"
 
-times 510-($-$$) db 0x00
-dw 0xAA55
+StageTwo:
+	; This is where stage2 actually starts
+
+	; setup segment registers
+	cli
+	mov ax, GENERAL_SEGMENT
+	mov ds, ax
+	mov es, ax
+
+	mov ax, STACK_SEGMENT
+	mov ss, ax
+	mov sp, 0xFFFF			; end of the segment
+	sti
+	; setup segment registers
+
+	
+
+	cli			; halt
+	hlt			; the system
+
+data_area:
+	Greeting: db "Welcome to Stage-2 bootloader",0
