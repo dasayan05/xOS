@@ -85,18 +85,20 @@ StageOne:
 
 	DiskReset DISK_NUMBER
 
+	; calculate # of sectors of ROOT DIR
+	mov ax, 0x20 			; each rootdir entry: 32(0x20) bytes
+	mul word [BPBRootEntries]
+	xor dx, dx
+	div word [BPBBytesPerSector]
+	push ax				; push '# of sectors'
 
-	mov ax, 0x0023			; the LBA value
-	call LBAtoCHS
-	mov ax, 0x07E0
-	mov es, ax
-	xor bx, bx
-	mov al, 0x01
-	mov dl, DISK_NUMBER
-	call ReadDisk
-
-
-	; DiskRead DISK_NUMBER, CHS(0,1,17), 1, 0x07E0
+	; calculate starting sector
+	mov ax, word [BPBSectorsPerFAT]
+	mov bl, byte [BPBNumberOfFATs]
+	xor bh, bh
+	mul bx
+	add ax, word [BPBReservedSectors]
+	; ax: 'starting sector (LBA value)'
 
 	cli
 	hlt
@@ -104,6 +106,7 @@ StageOne:
 data_area:
 	welcomeMsg: db "Welcome! ",0
 	errorMsg: db "Error! ",0
+
 
 times (BOOTLOADER_SIZE-2) - ($-$$) db FILLER_BYTE
 BootLoaderSign:
