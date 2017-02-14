@@ -17,8 +17,11 @@ all:
 	@ echo "Virtual floppy formatted"
 	@ ${DISKDUMP} if=${STAGE1} of=${FLOPPY} count=1 conv=notrunc
 	@ echo "Bootloader stage-1 written to floppy"
+	@ echo "mounting floopy image"
+	@ sudo mount -o loop ${FLOPPY} ${MOUNT_LOC}
 	@ sudo cp ${STAGE2} ${MOUNT_LOC}
 	@ echo "Bootloader stage-2 copied to floppy"
+	@ sudo umount ${MOUNT_LOC}
 	@ ${MAKE} emulate
 
 .PHONY: clean
