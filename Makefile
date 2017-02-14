@@ -18,7 +18,3 @@ bootloader:
 .PHONY: clean
 clean:
 	@ ${MAKE} -C ${EMULATOR_DIR} clean
-
-.PHONY: run
-run:
-	@ ${MAKE} -C ${EMULATOR_DIR} emulate
