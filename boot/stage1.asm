@@ -141,6 +141,18 @@ StageOne:
 	call PrintString
 .SearchingDone:
 
+	; read the FAT
+	xor ax, ax
+	add ax, word [BPBReservedSectors]
+	call LBAtoCHS
+	mov ax, 0x07E0
+	mov es, ax
+	mov dl, DISK_NUMBER
+	mov al, byte [BPBSectorsPerFAT]
+	xor bx, bx
+	call ReadDisk
+
+
 	cli
 	hlt
 
