@@ -135,6 +135,8 @@ StageOne:
 .GotIt:
 	pop di
 	add di, 0x1A
+	mov ax, word [es:di]
+	mov word [NextFatEntry], ax
 	jmp .SearchingDone
 .NotFound:
 	lea si, [NotFoundMsg]
@@ -152,15 +154,72 @@ StageOne:
 	xor bx, bx
 	call ReadDisk
 
+	; browse through the FAT to find the
+	; link chain of stage2 bootloader
+.BrowseFat:
+	mov ax, word [NextFatEntry]
+	cmp ax, 0x0FFF
+	je .outside
+.LoadTheSector:
+	; the entry is not FFF, so load the sector
+	add ax, 0x1F		; from logical fat entry to LBA
+	call LBAtoCHS
+	mov ax, 0x07E0
+	mov es, ax
+	mov dl, DISK_NUMBER
+	mov al, 0x01
+	mov bx, word [NextBXIndex]
+	call ReadDisk
+	add bx, 0x200
+	mov word [NextBXIndex], bx
 
+	mov ax, word [NextFatEntry]
+	test ax, 0x0001
+	jnz .ItsOdd
+.ItsEven:
+	mov bx, 0x02
+	xor dx, dx
+	div bx
+	mov bx, 0x03
+	mul bx
+	add ax, 0x01				; this AX in LBA
+
+	mov di, ax
+	mov cx, 0x050
+	mov es, cx
+	mov cl, byte [es:di]
+	mov bl, byte [es:di-1]
+	mov dl, byte [es:di+1]
+	test word [NextFatEntry], 0x0001
+	jnz .odd
+.even:
+	mov al, bl
+	mov ah, cl
+	and ax, 0x0FFF
+	jmp .saveNextFatEntry
+.odd:
+	mov al, cl
+	mov ah, dl
+	shr ax, 4
+.saveNextFatEntry:
+	mov word [NextFatEntry], ax
+	jmp .BrowseFat
+
+.ItsOdd:
+	sub ax, 0x01
+	jmp .ItsEven
+
+.outside:
 	cli
 	hlt
 
 data_area:
 	welcomeMsg: db "WC! ",0
 	errorMsg: db "ER! ",0
-	stage2filename: db "FILE    TXT"
+	stage2filename: db "BIGFILE TXT"
 	NotFoundMsg: db "Not found",0
+	NextFatEntry: dw 0x00
+	NextBXIndex: dw 0x00
 
 times (BOOTLOADER_SIZE-2) - ($-$$) db FILLER_BYTE
 BootLoaderSign:
