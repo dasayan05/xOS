@@ -114,8 +114,8 @@ StageOne:
 	hlt
 
 data_area:
-	welcomeMsg: db "Welcome! ",0
-	errorMsg: db "Error! ",0
+	welcomeMsg: db "WC! ",0
+	errorMsg: db "ER! ",0
 
 times (BOOTLOADER_SIZE-2) - ($-$$) db FILLER_BYTE
 BootLoaderSign:
