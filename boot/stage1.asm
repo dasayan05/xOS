@@ -58,6 +58,19 @@ BSFileSystem: 	        	db "FAT12   "		; FAT12 file system
 ; the ID/drive number (given by BIOS) of the boot device
 %define DISK_NUMBER 0x00
 
+; the FAT load address (segment)
+%define FAT_LOAD_ADDR 0x0050
+
+; the ROOT load address and some other
+; Parameters
+%define ROOT_LOAD_ADDR 0x07E0
+%define BYTES_PER_ROOT_ENTRY 0x20
+
+; STAGE2 load address
+; this is just below the bootloader
+%define STAGE2_LOAD_ADDR_SEG 0x07C0
+%define STAGE2_LOAD_ADDR_OFF 0x0200
+
 ; two very important Parameter for LBAtoCHS conversion
 %define HPC 2
 %define SPT 18
@@ -76,7 +89,7 @@ StageOne:
 
 	mov ax, STACK_SEGMENT
 	mov ss, ax
-	mov sp, 0xFFFF
+	mov sp, 0xFFFF			; end of the segment
 	sti
 	; setup segment registers
 
@@ -100,25 +113,25 @@ StageOne:
 	add ax, word [BPBReservedSectors]
 	; ax: 'starting sector (LBA value)'
 
-	call LBAtoCHS
-	mov ax, 0x07E0
+	call LBAtoCHS				; convert starting sector
+	mov ax, ROOT_LOAD_ADDR		; to CHS
 	mov es, ax
 	mov dl, DISK_NUMBER
 	pop bx
 	mov al, bl
 	xor bx, bx
 
-	call ReadDisk
+	call ReadDisk				; READ the ROOT
 
-	; search for the stage2 bootloader
+	; search the root dir for the stage2 bootloader
 
 	mov al, 0				; setting local counter
-	mov di, -0x20
+	mov di, -0x20			; init some indexing variables
 
 .gotoNextEntry:
 	xor al, al
-	lea si, [stage2filename]	; for DS:SI - 0x7c0:stage2filename
-	add di, 0x20			; for ES:DI - 0x7e0:0x00
+	lea si, [stage2filename]		; for DS:SI - 0x7c0:stage2filename
+	add di, BYTES_PER_ROOT_ENTRY	; for ES:DI - 0x7e0:0x00
 	cmp byte [es:di], 0x00
 	je .NotFound
 	push di
@@ -136,10 +149,10 @@ StageOne:
 	pop di
 	add di, 0x1A
 	mov ax, word [es:di]
-	mov word [NextFatEntry], ax
-	jmp .SearchingDone
+	mov word [NextFatEntry], ax	; Got the first logical
+	jmp .SearchingDone			; cluster at 'NextFatEntry'
 .NotFound:
-	lea si, [NotFoundMsg]
+	lea si, [NotFoundMsg]		; if stage 2 not found
 	call PrintString
 .SearchingDone:
 
@@ -147,7 +160,7 @@ StageOne:
 	xor ax, ax
 	add ax, word [BPBReservedSectors]
 	call LBAtoCHS
-	mov ax, 0x050
+	mov ax, FAT_LOAD_ADDR
 	mov es, ax
 	mov dl, DISK_NUMBER
 	mov al, byte [BPBSectorsPerFAT]
@@ -158,13 +171,13 @@ StageOne:
 	; link chain of stage2 bootloader
 .BrowseFat:
 	mov ax, word [NextFatEntry]
-	cmp ax, 0x0FFF
+	cmp ax, 0x0FFF					; means the chain ended here
 	je .JumpToStageTwo
 .LoadTheSector:
 	; the entry is not FFF, so load the sector
-	add ax, 0x1F		; from logical fat entry to LBA
-	call LBAtoCHS
-	mov ax, 0x07E0
+	add ax, 0x1F					; from logical fat entry to LBA
+	call LBAtoCHS					; LBA = 33 + (logical fat entry number) - 2
+	mov ax, STAGE2_LOAD_ADDR_SEG
 	mov es, ax
 	mov dl, DISK_NUMBER
 	mov al, 0x01
@@ -172,6 +185,11 @@ StageOne:
 	call ReadDisk
 	add bx, 0x200
 	mov word [NextBXIndex], bx
+
+	; this is the ugliest part:
+	; This is where I resolved the 12-bit FAT entries
+	; and followed the link chain
+	; I will later add a detail description on how I did it !!!
 
 	mov ax, word [NextFatEntry]
 	test ax, 0x0001
@@ -185,7 +203,7 @@ StageOne:
 	add ax, 0x01				; this AX in LBA
 
 	mov di, ax
-	mov cx, 0x050
+	mov cx, FAT_LOAD_ADDR
 	mov es, cx
 	mov cl, byte [es:di]
 	mov bl, byte [es:di-1]
@@ -210,7 +228,8 @@ StageOne:
 	jmp .ItsEven
 
 .JumpToStageTwo:
-	jmp 0x07C0:0x0200
+	; this is a FAR jump to the stage2 code
+	jmp STAGE2_LOAD_ADDR_SEG:STAGE2_LOAD_ADDR_OFF
 
 	cli
 	hlt
@@ -221,7 +240,7 @@ data_area:
 	stage2filename: db "BIGFILE TXT"
 	NotFoundMsg: db "Not found",0
 	NextFatEntry: dw 0x00
-	NextBXIndex: dw 0x00
+	NextBXIndex: dw STAGE2_LOAD_ADDR_OFF
 
 times (BOOTLOADER_SIZE-2) - ($-$$) db FILLER_BYTE
 BootLoaderSign:
