@@ -6,7 +6,7 @@ section .text	; Text (only) section
 StageOneEntry:
 jmp StageOne	; jump to the main code
 
-# BIOS Parameter block - BPB
+; BIOS Parameter block - BPB
 BPB_OEM: 				db "xOS     " 		; Just a name
 BPBBytesPerSector:  	dw 512 			; i.e. 512
 BPBSectorsPerCluster: 	db 1				; Simplest case in floppy
@@ -26,7 +26,7 @@ BSExtBootSignature: 	db 0x29
 BSSerialNumber:	     dd 0xa0a1a2a3
 BSVolumeLabel: 	     db "MOS: FLOPPY"	; Volume label
 BSFileSystem: 	        	db "FAT12   "		; FAT12 file system
-# BIOS Parameter block - BPB
+; BIOS Parameter block - BPB
 
 ; REAL MODE MEMORY MAP ;;;;;;;;;;;;;;;;;;;;
 ; 0x00000 -> 0x003FF (1KB): IVT-Real mode
