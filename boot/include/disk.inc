@@ -39,6 +39,37 @@ ReadDisk:
 .done:
 	ret
 
+LBAtoCHS:
+	; converts LBA to CHS using stack
+	; ax: LBA
+	; CH-DH-CL: CHS
+	push ax
+	xor dx, dx
+	mov bx, HPC*SPT
+	div bx
+	mov ch, al		; calculate 'C' into CH
+
+	pop ax
+	push ax
+	xor dx, dx
+	mov bx, SPT
+	div bx
+	mov ax, dx
+	add ax, 0x01
+	mov cl, al		; calculate 'S' into CL
+
+	pop ax
+	mov bx, SPT
+	xor dx, dx
+	div bx
+	xor dx, dx
+	mov bx, HPC
+	div bx
+	mov dh, dl		; calculate 'H' into DH
+
+	ret
+
+
 %macro DiskReset 1
 	mov dl, %1
 	call ResetDisk

@@ -85,15 +85,13 @@ StageOne:
 
 	DiskReset DISK_NUMBER
 
+
+	mov ax, 0x0023			; the LBA value
+	call LBAtoCHS
 	mov ax, 0x07E0
 	mov es, ax
 	xor bx, bx
-	mov word [LBA], 0x0023
-	call LBAtoCHS
-	mov ch, byte [CYL]
-	mov dh, byte [HEAD]
-	mov cl, byte [SEC]
-	mov al, 1
+	mov al, 0x01
 	mov dl, DISK_NUMBER
 	call ReadDisk
 
@@ -106,12 +104,6 @@ StageOne:
 data_area:
 	welcomeMsg: db "Welcome! ",0
 	errorMsg: db "Error! ",0
-	CYL: db 0x00
-	HEAD: db 0x00
-	SEC: db 0x00
-	LBA: dw 0x00
-	TEMP1: dw 0x00
-	TEMP2: dw 0x00
 
 times (BOOTLOADER_SIZE-2) - ($-$$) db FILLER_BYTE
 BootLoaderSign:
