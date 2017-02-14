@@ -100,13 +100,22 @@ StageOne:
 	add ax, word [BPBReservedSectors]
 	; ax: 'starting sector (LBA value)'
 
+	call LBAtoCHS
+	mov ax, 0x07E0
+	mov es, ax
+	mov dl, DISK_NUMBER
+	pop bx
+	mov al, bl
+	xor bx, bx
+
+	call ReadDisk
+
 	cli
 	hlt
 
 data_area:
 	welcomeMsg: db "Welcome! ",0
 	errorMsg: db "Error! ",0
-
 
 times (BOOTLOADER_SIZE-2) - ($-$$) db FILLER_BYTE
 BootLoaderSign:
