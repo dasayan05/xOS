@@ -19,7 +19,6 @@ all:
 	@ echo "Bootloader stage-1 written to floppy"
 	@ sudo cp ${STAGE2} ${MOUNT_LOC}
 	@ echo "Bootloader stage-2 copied to floppy"
-	@ ${MAKE} emulate
 
 .PHONY: clean
 clean:
