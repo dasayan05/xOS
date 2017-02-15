@@ -8,7 +8,7 @@ STAGE1_INC_DIR = ./include/stage1/
 STAGE1_SRCS = $(wildcard ${STAGE1_INC_DIR}*.inc)
 
 STAGE2_INC_DIR = ./include/stage2/
-STAGE2_SRCS = $(wildcard ${STAGE2_INC_DIR}*.c)
+STAGE2_SRCS = $(wildcard ${STAGE2_INC_DIR}*.c) $(wildcard ${STAGE2_INC_DIR}**/*.c)
 STAGE2_OBJS = $(STAGE2_SRCS:.c=.o)
 
 ASM = nasm
@@ -31,7 +31,7 @@ stage2.o: stage2.asm
 	${ASM} $^ -o $@ -f elf32
 
 %.o: %.c
-	${CC} $^ -o $@
+	${CC} $^ -o $@ -I ${STAGE2_INC_DIR}
 
 .PHONY: clean
 clean:
