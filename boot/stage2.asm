@@ -26,10 +26,11 @@ StageTwo:
 	sti
 	; setup segment registers
 
-	
+	lea si, [Greeting]
+	call PrintString
 
 	cli			; halt
 	hlt			; the system
 
 data_area:
-	Greeting: db "Welcome to Stage-2 bootloader",0
+	Greeting: db "Hello World",0
