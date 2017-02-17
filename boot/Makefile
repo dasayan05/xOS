@@ -13,7 +13,7 @@ STAGE2_OBJS = $(STAGE2_SRCS:.c=.o)
 
 ASM = nasm
 GCC = gcc -m16 -ffreestanding -nostdlib -fno-asynchronous-unwind-tables
-CC = ${GCC} -c -masm=intel
+CC = ${GCC} -c -masm=intel -mpreferred-stack-boundary=2
 LD = ${GCC} -Wl,--build-id=none
 REMOVE = rm -f
 
