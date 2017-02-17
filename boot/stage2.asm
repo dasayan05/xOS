@@ -19,7 +19,7 @@ StageTwo:
 	mov ds, ax
 	mov es, ax
 
-	mov ax, STACK_SEGMENT
+	mov ax, GENERAL_SEGMENT
 	mov ss, ax
 	mov sp, 0xFFFF			; end of the segment
 	sti
