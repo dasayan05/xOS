@@ -10,6 +10,7 @@ StageTwoEntry:
 jmp StageTwo	; jump to the main code
 
 %include "print.inc"
+%include "gdt.inc"
 
 StageTwo:
 	; This is where stage2 actually starts
@@ -28,6 +29,15 @@ StageTwo:
 
 	lea si, [Greeting]
 	call PrintString
+
+	cli
+	lgdt [gdt_struct]
+	mov eax, cr0
+	or eax, 0x01
+	mov cr0, eax
+	sti
+
+Entry32:
 
 	cli			; halt
 	hlt			; the system
